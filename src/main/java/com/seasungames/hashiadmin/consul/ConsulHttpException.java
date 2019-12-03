@@ -1,29 +1,31 @@
 package com.seasungames.hashiadmin.consul;
 
+import java.net.URI;
+
 /**
  * Created by wangzhiguang on 2019-11-05.
  */
 public final class ConsulHttpException extends RuntimeException {
 
-    private final String path;
+    private final URI uri;
     private final int statusCode;
     private final String body;
 
-    public ConsulHttpException(String path, int statusCode, String body) {
-        this.path = path;
+    public ConsulHttpException(URI uri, int statusCode, String body) {
+        this.uri = uri;
         this.statusCode = statusCode;
         this.body = body;
     }
 
-    public ConsulHttpException(String path, Throwable cause) {
+    public ConsulHttpException(URI uri, Throwable cause) {
         super(cause);
-        this.path = path;
+        this.uri = uri;
         this.statusCode = 0;
         this.body = "";
     }
 
-    public String getPath() {
-        return path;
+    public URI getUri() {
+        return uri;
     }
 
     public int getStatusCode() {

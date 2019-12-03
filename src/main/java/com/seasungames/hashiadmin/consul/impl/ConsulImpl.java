@@ -48,24 +48,39 @@ public final class ConsulImpl implements Consul {
     }
 
     @Override
-    public long getRaftLastLogIndex(String serverIpAddress) {
-        var httpAddr = String.format("http://%s:8500", serverIpAddress);
+    public long getRaftLastLogIndex(ConsulServer server) {
+        var httpAddr = getConsulHttpAddr(server.ipAddress());
         var body = doGet(httpAddr, "/v1/agent/self");
         return parseRaftLastLogIndex(body);
     }
 
-    private JSONObject doGet(String consulAddr, String path) {
-        var request = createHttpRequest(consulAddr, "GET", path, BodyPublishers.noBody());
+    @Override
+    public void leave(String nodeIpAddress) {
+        var httpAddr = getConsulHttpAddr(nodeIpAddress);
+        var request = createHttpRequest(httpAddr, "PUT", "/v1/agent/leave", BodyPublishers.noBody());
+        sendHttpRequest(request);
+    }
+
+    private static String getConsulHttpAddr(String nodeIpAddress) {
+        return String.format("http://%s:8500", nodeIpAddress);
+    }
+
+    private JSONObject doGet(String consulHttpAddr, String path) {
+        var request = createHttpRequest(consulHttpAddr, "GET", path, BodyPublishers.noBody());
+        return sendHttpRequest(request);
+    }
+
+    private JSONObject sendHttpRequest(HttpRequest request) {
         HttpResponse<String> response = null;
         try {
             response = httpClient.send(request, BodyHandlers.ofString());
         } catch (IOException | InterruptedException e) {
-            throw new ConsulHttpException(path, e);
+            throw new ConsulHttpException(request.uri(), e);
         }
         if (response.statusCode() == 200) {
             return JSONObject.parseObject(response.body());
         } else {
-            throw new ConsulHttpException(path, response.statusCode(), response.body());
+            throw new ConsulHttpException(request.uri(), response.statusCode(), response.body());
         }
     }
 

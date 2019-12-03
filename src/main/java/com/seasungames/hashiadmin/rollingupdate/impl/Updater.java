@@ -37,10 +37,13 @@ public final class Updater {
 
     public void run() {
         var instances = listAsgInstances(asgName);
+        printRollingUpdateInstances(instances);
+        confirmRollingUpdate();
         doRollingUpdate(instances);
     }
 
     private void doRollingUpdate(List<Instance> instances) {
+
         final int total = instances.size();
         for (int i = 0; i < total; i++) {
             var oldInstance = instances.get(i);
@@ -66,7 +69,28 @@ public final class Updater {
         log.info("Found {} instances in asg {}", total, asgName);
         for (int i = 0; i < total; i++) {
             var instance = instances.get(i);
-            log.info("({}/{}) {}", i + 1, total, instance);
+            log.info("  ({}/{}) {}", i + 1, total, instance);
+        }
+    }
+
+    private static void printRollingUpdateInstances(List<Instance> instances) {
+        final int total = instances.size();
+        log.info("Will do rolling update of {} instances in following order:", total);
+        for (int i = 0; i < total; i++) {
+            var instance = instances.get(i);
+            log.info("  ({}/{}) {}", i + 1, total, instance);
+        }
+    }
+
+    private static void confirmRollingUpdate() {
+        final String prompt = "\nDo you want to perform these actions?\n  Only '%s' will be accepted to approve.\n\n  Enter a value: ";
+        final String expected = "yes";
+        String input = System.console().readLine(prompt, expected);
+        if (expected.equals(input)) {
+            System.out.println("\nAction approved.");
+        } else {
+            System.out.println("\nAction cancelled.");
+            System.exit(1);
         }
     }
 

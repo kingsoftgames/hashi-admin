@@ -15,5 +15,7 @@ public interface Consul {
 
     List<ConsulServer> listServers();
 
-    long getRaftLastLogIndex(String serverIpAddress);
+    long getRaftLastLogIndex(ConsulServer server);
+
+    void leave(String nodeIpAddress);
 }
