@@ -12,13 +12,14 @@ public final class HttpException extends RuntimeException {
     private final String body;
 
     public HttpException(URI uri, int statusCode, String body) {
+        super(String.format("%s, HTTP %d, %s", uri, statusCode, body));
         this.uri = uri;
         this.statusCode = statusCode;
         this.body = body;
     }
 
     public HttpException(URI uri, Throwable cause) {
-        super(cause);
+        super(uri.toString(), cause);
         this.uri = uri;
         this.statusCode = 0;
         this.body = "";
@@ -35,4 +36,6 @@ public final class HttpException extends RuntimeException {
     public String getBody() {
         return body;
     }
+
+
 }
