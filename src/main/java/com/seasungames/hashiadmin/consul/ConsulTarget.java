@@ -6,9 +6,9 @@ import lombok.extern.log4j.Log4j2;
 import software.amazon.awssdk.services.autoscaling.model.Instance;
 
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
+import static com.seasungames.hashiadmin.Utils.moveInstanceToLast;
 import static com.seasungames.hashiadmin.Utils.sleep;
 
 /**
@@ -28,8 +28,8 @@ public final class ConsulTarget extends AbstractTarget {
     @Override
     public void sortInstances(List<Instance> instances) {
         var consulLeader = getConsulLeader();
-        // Move leader to last element in List
-        Collections.sort(instances, consulLeaderLast(consulLeader.node()));
+        var instanceId = consulLeader.node();
+        Collections.sort(instances, moveInstanceToLast(instanceId));
     }
 
     @Override
@@ -57,17 +57,6 @@ public final class ConsulTarget extends AbstractTarget {
             .filter(x -> x.node().equals(nodeId))
             .findFirst()
             .orElseThrow();
-    }
-
-    private static Comparator<Instance> consulLeaderLast(String leaderInstanceId) {
-        return ((o1, o2) -> {
-            if (o1.instanceId().equals(leaderInstanceId))
-                return 1;
-            else if (o2.instanceId().equals(leaderInstanceId))
-                return -1;
-            else
-                return 0;
-        });
     }
 
     private ConsulServer waitForNewNode(String newNodeId) {
