@@ -2,18 +2,11 @@ package com.seasungames.hashiadmin.consul.impl;
 
 import com.alibaba.fastjson.JSONObject;
 import com.seasungames.hashiadmin.consul.Consul;
-import com.seasungames.hashiadmin.consul.ConsulHttpException;
 import com.seasungames.hashiadmin.consul.ConsulServer;
+import com.seasungames.hashiadmin.http.HttpApi;
 
-import java.io.IOException;
 import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpRequest.BodyPublisher;
 import java.net.http.HttpRequest.BodyPublishers;
-import java.net.http.HttpResponse;
-import java.net.http.HttpResponse.BodyHandlers;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,73 +16,48 @@ import static com.seasungames.hashiadmin.Utils.normalizeHttpAddr;
 /**
  * Created by wangzhiguang on 2019-11-13.
  */
-public final class ConsulImpl implements Consul {
+public final class ConsulImpl extends HttpApi implements Consul {
 
     private static final String DEFAULT_CONSUL_ADDR = "http://127.0.0.1:8500";
 
-    private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(1);
-    private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(3);
-
     private final String consulHttpAddr;
-    private final HttpClient httpClient;
 
     public ConsulImpl() {
         String addr = getenv("CONSUL_HTTP_ADDR", DEFAULT_CONSUL_ADDR);
         this.consulHttpAddr = normalizeHttpAddr(addr);
-        this.httpClient = HttpClient.newBuilder()
-            .connectTimeout(CONNECT_TIMEOUT)
-            .build();
     }
 
     @Override
     public List<ConsulServer> listServers() {
-        var body = doGet(this.consulHttpAddr, "/v1/operator/raft/configuration");
+        var body = getJson("/v1/operator/raft/configuration");
         return parseConsulServers(body);
     }
 
     @Override
     public long getRaftLastLogIndex(ConsulServer server) {
         var httpAddr = getConsulHttpAddr(server.ipAddress());
-        var body = doGet(httpAddr, "/v1/agent/self");
+        var body = getJson(httpAddr, "/v1/agent/self");
         return parseRaftLastLogIndex(body);
     }
 
     @Override
     public void leave(String nodeIpAddress) {
         var httpAddr = getConsulHttpAddr(nodeIpAddress);
-        var request = createHttpRequest(httpAddr, "PUT", "/v1/agent/leave", BodyPublishers.noBody());
-        sendHttpRequest(request);
+        var uri = URI.create(httpAddr + "/v1/agent/leave");
+        putJson(uri, BodyPublishers.noBody());
     }
 
     private static String getConsulHttpAddr(String nodeIpAddress) {
         return String.format("http://%s:8500", nodeIpAddress);
     }
 
-    private JSONObject doGet(String consulHttpAddr, String path) {
-        var request = createHttpRequest(consulHttpAddr, "GET", path, BodyPublishers.noBody());
-        return sendHttpRequest(request);
+    private JSONObject getJson(String path) {
+        return getJson(this.consulHttpAddr, path);
     }
 
-    private JSONObject sendHttpRequest(HttpRequest request) {
-        HttpResponse<String> response = null;
-        try {
-            response = httpClient.send(request, BodyHandlers.ofString());
-        } catch (IOException | InterruptedException e) {
-            throw new ConsulHttpException(request.uri(), e);
-        }
-        if (response.statusCode() == 200) {
-            return JSONObject.parseObject(response.body());
-        } else {
-            throw new ConsulHttpException(request.uri(), response.statusCode(), response.body());
-        }
-    }
-
-    private static HttpRequest createHttpRequest(String consulAddr, String method, String path, BodyPublisher bodyPublisher) {
-        return HttpRequest.newBuilder()
-            .uri(URI.create(consulAddr + path))
-            .method(method, bodyPublisher)
-            .timeout(REQUEST_TIMEOUT)
-            .build();
+    private JSONObject getJson(String consulHttpAddr, String path) {
+        var uri = URI.create(consulHttpAddr + path);
+        return getJson(uri);
     }
 
     private static List<ConsulServer> parseConsulServers(JSONObject body) {
