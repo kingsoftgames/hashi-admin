@@ -2,6 +2,7 @@ package com.seasungames.hashiadmin.nomad.impl;
 
 import com.alibaba.fastjson.JSONObject;
 import com.seasungames.hashiadmin.http.HttpApi;
+import com.seasungames.hashiadmin.http.HttpException;
 import com.seasungames.hashiadmin.nomad.Nomad;
 import com.seasungames.hashiadmin.nomad.NomadServer;
 
@@ -32,7 +33,7 @@ public final class NomadImpl extends HttpApi implements Nomad {
 
     @Override
     public List<NomadServer> listServers() {
-        var body = getJson("/v1/operator/autopilot/health");
+        var body = queryAutopilotHealth();
         return parseNomadServers(body);
     }
 
@@ -44,6 +45,20 @@ public final class NomadImpl extends HttpApi implements Nomad {
     private static Optional<String> getNomadToken() {
         String token = getenv("NOMAD_TOKEN", null);
         return Optional.ofNullable(token);
+    }
+
+    private JSONObject queryAutopilotHealth() {
+        try {
+            return getJson("/v1/operator/autopilot/health");
+        } catch (HttpException e) {
+            // HTTP 429 is OK, because the request may hit the new node
+            // https://www.nomadproject.io/api/operator.html#read-health
+            if (e.getStatusCode() == 429) {
+                return JSONObject.parseObject(e.getBody());
+            } else {
+                throw e;
+            }
+        }
     }
 
     private JSONObject getJson(String path) {
