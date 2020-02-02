@@ -9,11 +9,12 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-    <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
-    <maven-shade-plugin.version>3.2.1</maven-shade-plugin.version>
-
     <main-class>com.seasungames.hashiadmin.HashiAdmin</main-class>
-    <fat-jar.name>hashi-admin</fat-jar.name>
+
+    <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
+
+    <graalvm.version>19.3.1</graalvm.version>
+    <graalvm.native-image.skip>true</graalvm.native-image.skip>
 
     <awssdk.version>2.10.7</awssdk.version>
     <fastjson.version>1.2.62</fastjson.version>
@@ -86,11 +87,10 @@
       <version>${lombok.version}</version>
       <scope>provided</scope>
     </dependency>
-</dependencies>
+  </dependencies>
 
   <build>
-    <pluginManagement>
-      <plugins>
+    <plugins>
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
           <version>${maven-compiler-plugin.version}</version>
@@ -100,46 +100,54 @@
               <arg>-Xlint:unchecked</arg>
               <arg>-Xlint:deprecation</arg>
             </compilerArgs>
+            <annotationProcessorPaths>
+              <path>
+                <groupId>info.picocli</groupId>
+                <artifactId>picocli-codegen</artifactId>
+                <version>${picocli.version}</version>
+              </path>
+              <path>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+              </path>
+            </annotationProcessorPaths>
           </configuration>
         </plugin>
-      </plugins>
-    </pluginManagement>
-
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>${maven-shade-plugin.version}</version>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
+        <plugin>
+            <groupId>org.graalvm.nativeimage</groupId>
+            <artifactId>native-image-maven-plugin</artifactId>
+            <version>${graalvm.version}</version>
+            <executions>
+                <execution>
+                    <goals>
+                        <goal>native-image</goal>
+                    </goals>
+                    <phase>package</phase>
+                </execution>
+            </executions>
             <configuration>
-              <transformers>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                  <manifestEntries>
-                    <Main-Class>${main-class}</Main-Class>
-                    <Project-Version>${project.version}</Project-Version>
-                    <!--
-                      Declare shaded jar as Multi-Release jar.
-                      This resolves warning from StackLocator.java in log4j2 when running on Java >= 9
-                        "WARNING: sun.reflect.Reflection.getCallerClass is not supported. This will impact performance."
-                      See "JEP 238: Multi-Release JAR Files": https://openjdk.java.net/jeps/238
-                     -->
-                    <Multi-Release>true</Multi-Release>
-                  </manifestEntries>
-                </transformer>
-              </transformers>
-              <artifactSet>
-              </artifactSet>
-              <outputFile>${project.build.directory}/${fat-jar.name}.jar
-              </outputFile>
+                <skip>${graalvm.native-image.skip}</skip>
+                <mainClass>${main-class}</mainClass>
+                <imageName>${project.artifactId}</imageName>
+                <buildArgs>
+                  --no-server
+                  --no-fallback
+                  --report-unsupported-elements-at-runtime
+                  --enable-https
+                  --static
+                </buildArgs>
             </configuration>
-          </execution>
-        </executions>
-      </plugin>
+        </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>native</id>
+      <properties>
+        <graalvm.native-image.skip>false</graalvm.native-image.skip>
+      </properties>
+    </profile>
+  </profiles>
 </project>
