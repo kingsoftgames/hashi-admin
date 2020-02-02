@@ -2,7 +2,7 @@ package com.seasungames.hashiadmin.aws.impl;
 
 import com.seasungames.hashiadmin.aws.Aws;
 import com.seasungames.hashiadmin.aws.AwsException;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.java.Log;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.autoscaling.AutoScalingClient;
 import software.amazon.awssdk.services.autoscaling.model.*;
@@ -20,7 +20,7 @@ import static com.seasungames.hashiadmin.Utils.sleep;
 /**
  * Created by wangzhiguang on 2019-11-13.
  */
-@Log4j2
+@Log
 public final class AwsImpl implements Aws {
 
     private final Ec2Client ec2;
@@ -67,7 +67,7 @@ public final class AwsImpl implements Aws {
             .build();
         var response = ec2.terminateInstances(request);
         InstanceStateChange isc = response.terminatingInstances().get(0);
-        log.info("Instance {} changed from {} to {}", isc.instanceId(), isc.previousState(), isc.currentState());
+        log.info(String.format("Instance %s changed from %s to %s", isc.instanceId(), isc.previousState(), isc.currentState()));
         waitUntilTerminated(isc.instanceId());
     }
 
@@ -75,13 +75,13 @@ public final class AwsImpl implements Aws {
         while (true) {
             var activity = describeScalingActivity(activityId);
             var statusCode = activity.statusCode();
-            log.info("{} ({})", activity.description(), statusCode);
+            log.info(String.format("%s (%s)", activity.description(), statusCode));
 
             switch (statusCode) {
                 case FAILED:
                     throw new AwsException("Scaling activity failed: " + activityId);
                 case SUCCESSFUL:
-                    log.info("Scaling activity successful: {}", activityId);
+                    log.info("Scaling activity successful: " + activityId);
                     return;
                 case IN_PROGRESS:
                     sleep();
@@ -119,7 +119,7 @@ public final class AwsImpl implements Aws {
             var response = ec2.describeInstanceStatus(request);
             var status = response.instanceStatuses().get(0);
             var isc = status.instanceState().name();
-            log.info("Instance {} is {}", instanceId, isc);
+            log.info(String.format("Instance %s is %s", instanceId, isc));
             switch (isc) {
                 case TERMINATED:
                     break loop;
@@ -127,7 +127,7 @@ public final class AwsImpl implements Aws {
                     sleep();
                     continue;
                 default:
-                    log.error("Unexpected instance state: {}", isc);
+                    log.warning("Unexpected instance state: " + isc);
                     return;
             }
         }

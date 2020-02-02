@@ -4,7 +4,7 @@ import com.seasungames.hashiadmin.aws.Aws;
 import com.seasungames.hashiadmin.consul.Consul;
 import com.seasungames.hashiadmin.rollingupdate.Context;
 import com.seasungames.hashiadmin.rollingupdate.Target;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.java.Log;
 import software.amazon.awssdk.services.autoscaling.model.Instance;
 
 import java.util.HashSet;
@@ -17,7 +17,7 @@ import static java.util.stream.Collectors.toSet;
 /**
  * Created by wangzhiguang on 2019-11-12.
  */
-@Log4j2
+@Log
 public final class Updater {
 
     private final Target target;
@@ -47,12 +47,12 @@ public final class Updater {
         final int total = instances.size();
         for (int i = 0; i < total; i++) {
             var oldInstance = instances.get(i);
-            log.info("Updating instance {} ({}/{})", oldInstance.instanceId(), i + 1, total);
+            log.info(String.format("Updating instance %s (%d/%d)", oldInstance.instanceId(), i + 1, total));
             var newInstance = detachOldInstance(oldInstance);
             prepareNewInstance(newInstance);
             retireOldInstance(oldInstance);
             terminateOldInstance(oldInstance);
-            log.info("Updated instance {} ({}/{})", oldInstance.instanceId(), i + 1, total);
+            log.info(String.format("Updated instance %s (%d/%d)", oldInstance.instanceId(), i + 1, total));
         }
     }
 
@@ -66,19 +66,19 @@ public final class Updater {
 
     private void printAsgInstances(List<Instance> instances) {
         final int total = instances.size();
-        log.info("Found {} instances in asg {}", total, asgName);
+        log.info(String.format("Found %d instances in asg %s", total, asgName));
         for (int i = 0; i < total; i++) {
             var instance = instances.get(i);
-            log.info("  ({}/{}) {}", i + 1, total, instance);
+            log.info(String.format("  (%d/%d) %s", i + 1, total, instance));
         }
     }
 
     private static void printRollingUpdateInstances(List<Instance> instances) {
         final int total = instances.size();
-        log.info("Will do rolling update of {} instances in following order:", total);
+        log.info(String.format("Will do rolling update of %d instances in following order:", total));
         for (int i = 0; i < total; i++) {
             var instance = instances.get(i);
-            log.info("  ({}/{}) {}", i + 1, total, instance);
+            log.info(String.format("  (%d/%d) %s", i + 1, total, instance));
         }
     }
 
@@ -104,15 +104,15 @@ public final class Updater {
     }
 
     private Instance detachOldInstance(Instance oldInstance) {
-        log.info("Detaching instance {} from asg {}", oldInstance.instanceId(), asgName);
+        log.info(String.format("Detaching instance %s from asg %s", oldInstance.instanceId(), asgName));
         aws.detachInstance(oldInstance.instanceId(), asgName);
-        log.info("Detached instance {} from asg {}", oldInstance.instanceId(), asgName);
+        log.info(String.format("Detached instance %s from asg %s", oldInstance.instanceId(), asgName));
         return waitForNewInstance();
     }
 
     private Instance waitForNewInstance() {
         log.info("Waiting for new instance to launch");
-        Instance result = null;
+        Instance result;
         while (true) {
             var instances = aws.listAsgInstances(asgName);
             var newInstance = instances.stream()
@@ -124,26 +124,26 @@ public final class Updater {
             }
             sleep();
         }
-        log.info("New instance launched: {}", result.instanceId());
+        log.info("New instance launched: " + result.instanceId());
         return result;
     }
 
     private void prepareNewInstance(Instance instance) {
-        log.info("Preparing new instance: {}", instance.instanceId());
+        log.info("Preparing new instance: " + instance.instanceId());
         target.prepareNewInstance(instance);
         oldInstanceIds.add(instance.instanceId());
-        log.info("Prepared new instance: {}", instance.instanceId());
+        log.info("Prepared new instance: " + instance.instanceId());
     }
 
     private void retireOldInstance(Instance instance) {
-        log.info("Retiring old instance: {}", instance.instanceId());
+        log.info("Retiring old instance: " + instance.instanceId());
         target.retireOldInstance(instance);
-        log.info("Retired old instance: {}", instance.instanceId());
+        log.info("Retired old instance: " + instance.instanceId());
     }
 
     private void terminateOldInstance(Instance instance) {
-        log.info("Terminating old instance: {}", instance.instanceId());
+        log.info("Terminating old instance: " + instance.instanceId());
         aws.terminateInstance(instance.instanceId());
-        log.info("Terminated old instance: {}", instance.instanceId());
+        log.info("Terminated old instance: " + instance.instanceId());
     }
 }

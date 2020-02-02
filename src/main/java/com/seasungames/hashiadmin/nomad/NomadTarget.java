@@ -2,7 +2,7 @@ package com.seasungames.hashiadmin.nomad;
 
 import com.seasungames.hashiadmin.rollingupdate.AbstractTarget;
 import com.seasungames.hashiadmin.rollingupdate.Context;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.java.Log;
 import software.amazon.awssdk.services.autoscaling.model.Instance;
 
 import java.util.Collections;
@@ -14,7 +14,7 @@ import static com.seasungames.hashiadmin.Utils.sleep;
 /**
  * Created by wangzhiguang on 2019-11-12.
  */
-@Log4j2
+@Log
 public class NomadTarget extends AbstractTarget {
 
     private Nomad nomad;
@@ -53,14 +53,14 @@ public class NomadTarget extends AbstractTarget {
     }
 
     private void waitForNewNode(String instanceId) {
-        log.info("Waiting for new Nomad node to appear: {}", instanceId);
+        log.info("Waiting for new Nomad node to appear: " + instanceId);
         while (true) {
             var servers = nomad.listServers();
             var newNode = servers.stream()
                 .filter(x -> x.name().equals(instanceId))
                 .findFirst();
             if (newNode.isPresent()) {
-                log.info("New Nomad node appeared: {}", instanceId);
+                log.info("New Nomad node appeared: " + instanceId);
                 return;
             } else {
                 sleep();
@@ -69,16 +69,16 @@ public class NomadTarget extends AbstractTarget {
     }
 
     private void waitForRaftLogReplication(String instanceId) {
-        log.info("Waiting for raft log replication to node: {}", instanceId);
+        log.info("Waiting for raft log replication to node: " + instanceId);
         while (true) {
             var servers = nomad.listServers();
             var leader = getServerLeader(servers);
             var follower = getServerByName(servers, instanceId);
-            log.info("leader={}, raftLastIndex={}, follower={}, raftLastIndex={}",
+            log.info(String.format("leader=%s, raftLastIndex=%d, follower=%s, raftLastIndex=%d",
                 leader.ipAddress(), leader.raftLastIndex(),
-                follower.ipAddress(), follower.raftLastIndex());
+                follower.ipAddress(), follower.raftLastIndex()));
             if (leader.raftLastIndex() == follower.raftLastIndex()) {
-                log.info("Raft logs have fully replicated to node {}", instanceId);
+                log.info("Raft logs have fully replicated to node " + instanceId);
                 return;
             } else {
                 sleep();

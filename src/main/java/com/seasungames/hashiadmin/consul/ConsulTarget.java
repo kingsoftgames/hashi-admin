@@ -2,7 +2,7 @@ package com.seasungames.hashiadmin.consul;
 
 import com.seasungames.hashiadmin.rollingupdate.AbstractTarget;
 import com.seasungames.hashiadmin.rollingupdate.Context;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.java.Log;
 import software.amazon.awssdk.services.autoscaling.model.Instance;
 
 import java.util.Collections;
@@ -14,7 +14,7 @@ import static com.seasungames.hashiadmin.Utils.sleep;
 /**
  * Created by wangzhiguang on 2019-11-12.
  */
-@Log4j2
+@Log
 public final class ConsulTarget extends AbstractTarget {
 
     private Consul consul;
@@ -60,14 +60,14 @@ public final class ConsulTarget extends AbstractTarget {
     }
 
     private ConsulServer waitForNewNode(String newNodeId) {
-        log.info("Waiting for new Consul node to appear: {}", newNodeId);
+        log.info("Waiting for new Consul node to appear: " + newNodeId);
         while (true) {
             var servers = consul.listServers();
             var newNode = servers.stream()
                 .filter(x -> x.node().equals(newNodeId))
                 .findFirst();
             if (newNode.isPresent()) {
-                log.info("New Consul node appeared: {}", newNodeId);
+                log.info("New Consul node appeared: " + newNodeId);
                 return newNode.get();
             } else {
                 sleep();
@@ -79,14 +79,14 @@ public final class ConsulTarget extends AbstractTarget {
     // https://www.consul.io/docs/install/bootstrapping.html#verifying-the-cluster-and-connect-the-clients
     // https://learn.hashicorp.com/consul/day-2-operations/servers#server-coordination
     private void waitForRaftLogReplication(ConsulServer follower) {
-        log.info("Waiting for raft log replication to node: {}", follower.node());
+        log.info("Waiting for raft log replication to node: " + follower.node());
         while (true) {
             var leader = getConsulLeader();
             var leaderRaftLastLogIndex = consul.getRaftLastLogIndex(leader);
             var followerRaftLastLogIndex = consul.getRaftLastLogIndex(follower);
-            log.info("leader={}, raft.last_log_index={}, follower={}, raft.last_log_index={}",
+            log.info(String.format("leader=%s, raft.last_log_index=%d, follower=%s, raft.last_log_index=%d",
                 leader.ipAddress(), leaderRaftLastLogIndex,
-                follower.ipAddress(), followerRaftLastLogIndex);
+                follower.ipAddress(), followerRaftLastLogIndex));
             if (leaderRaftLastLogIndex == followerRaftLastLogIndex) {
                 log.info("raft.last_log_index of leader and follower has converged to the same value.");
                 return;

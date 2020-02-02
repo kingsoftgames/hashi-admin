@@ -3,19 +3,20 @@ package com.seasungames.hashiadmin.rollingupdate;
 import com.seasungames.hashiadmin.rollingupdate.impl.ContextImpl;
 import com.seasungames.hashiadmin.rollingupdate.impl.TargetName;
 import com.seasungames.hashiadmin.rollingupdate.impl.Updater;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.java.Log;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 import software.amazon.awssdk.regions.Region;
 
 import java.util.concurrent.Callable;
+import java.util.logging.Level;
 
 /**
  * Created by wangzhiguang on 2019-11-12.
  */
 
-@Log4j2
+@Log
 @Command(name = "rolling-update", mixinStandardHelpOptions = true,
     description = "Run a rolling update of an AWS Auto Scaling Group.")
 public final class RollingUpdate implements Callable<Integer> {
@@ -32,8 +33,8 @@ public final class RollingUpdate implements Callable<Integer> {
     private String awsRegion;
 
     @Override
-    public Integer call() throws Exception {
-        log.info("Start rolling update of a {} asg {}, in region {}", targetName, asgName, awsRegion);
+    public Integer call() {
+        log.info(String.format("Start rolling update of a %s asg %s, in region %s", targetName, asgName, awsRegion));
         var target = this.targetName.get();
         var context = new ContextImpl(this.asgName, Region.of(this.awsRegion));
         var updater = new Updater(target, context);
@@ -41,8 +42,8 @@ public final class RollingUpdate implements Callable<Integer> {
         try {
             updater.run();
         } catch (Throwable t) {
-            log.error("Unhandled exception", t);
-            log.error("Finished: FAILURE");
+            log.log(Level.SEVERE, "Unhandled exception", t);
+            log.severe("Finished: FAILURE");
             return 1;
         }
 
