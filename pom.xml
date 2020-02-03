@@ -19,6 +19,7 @@
     <awssdk.version>2.10.56</awssdk.version>
     <fastjson.version>1.2.62</fastjson.version>
     <picocli.version>4.1.4</picocli.version>
+    <slf4j.version>1.7.30</slf4j.version>
     <lombok.version>1.18.10</lombok.version>
   </properties>
 
@@ -52,6 +53,16 @@
       <groupId>info.picocli</groupId>
       <artifactId>picocli</artifactId>
       <version>${picocli.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${slf4j.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-jdk14</artifactId>
+      <version>${slf4j.version}</version>
     </dependency>
     <dependency>
       <groupId>org.projectlombok</groupId>
