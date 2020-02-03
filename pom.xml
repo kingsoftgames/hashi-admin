@@ -113,13 +113,6 @@
                 <skip>${graalvm.native-image.skip}</skip>
                 <mainClass>${main-class}</mainClass>
                 <imageName>${project.artifactId}</imageName>
-                <buildArgs>
-                  --no-server
-                  --no-fallback
-                  --report-unsupported-elements-at-runtime
-                  --enable-https
-                  --static
-                </buildArgs>
             </configuration>
         </plugin>
     </plugins>
