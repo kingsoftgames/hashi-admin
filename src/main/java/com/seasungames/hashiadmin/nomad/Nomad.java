@@ -14,4 +14,6 @@ public interface Nomad {
     }
 
     List<NomadServer> listServers();
+
+    NomadClientList listClients(long index);
 }

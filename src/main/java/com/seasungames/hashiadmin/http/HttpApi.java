@@ -24,7 +24,6 @@ import static java.util.Collections.emptyMap;
 public abstract class HttpApi {
 
     private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(1);
-    private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(3);
 
     private final HttpClient httpClient;
 
@@ -109,8 +108,7 @@ public abstract class HttpApi {
     private static HttpRequest createHttpRequest(URI uri, String method, Map<String, String> headers, BodyPublisher bodyPublisher) {
         var builder = HttpRequest.newBuilder()
             .uri(uri)
-            .method(method, bodyPublisher)
-            .timeout(REQUEST_TIMEOUT);
+            .method(method, bodyPublisher);
         headers.forEach((k, v) -> builder.setHeader(k, v));
         return builder.build();
     }
