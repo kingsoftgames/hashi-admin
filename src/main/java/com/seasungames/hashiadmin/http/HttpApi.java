@@ -1,5 +1,7 @@
 package com.seasungames.hashiadmin.http;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
 import java.io.IOException;
@@ -12,6 +14,7 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.time.Duration;
 import java.util.Map;
+import java.util.function.Function;
 
 import static java.util.Collections.emptyMap;
 
@@ -36,8 +39,17 @@ public abstract class HttpApi {
     }
 
     protected JSONObject getJson(URI uri, Map<String, String> headers) {
-        var request = createHttpRequest(uri, "GET", headers, BodyPublishers.noBody());
-        return requestJson(request);
+        var response = doGet(uri, headers);
+        return parseJsonObject(response);
+    }
+
+    protected JSONObject postJson(URI uri, HttpRequest.BodyPublisher body) {
+        return postJson(uri, emptyMap(), body);
+    }
+
+    protected JSONObject postJson(URI uri, Map<String, String> headers, HttpRequest.BodyPublisher body) {
+        var response = doPost(uri, headers, body);
+        return parseJsonObject(response);
     }
 
     protected JSONObject putJson(URI uri, HttpRequest.BodyPublisher body) {
@@ -45,8 +57,53 @@ public abstract class HttpApi {
     }
 
     protected JSONObject putJson(URI uri, Map<String, String> headers, HttpRequest.BodyPublisher body) {
-        var request = createHttpRequest(uri, "PUT", headers, BodyPublishers.noBody());
-        return requestJson(request);
+        var response = doPut(uri, headers, body);
+        return parseJsonObject(response);
+    }
+
+    protected HttpResponse<String> doGet(URI uri) {
+        return doGet(uri, emptyMap());
+    }
+
+    protected HttpResponse<String> doGet(URI uri, Map<String, String> headers) {
+        return doHttpRequest(uri, "GET", headers, BodyPublishers.noBody());
+    }
+
+    protected HttpResponse<String> doPost(URI uri, HttpRequest.BodyPublisher body) {
+        return doPost(uri, emptyMap(), body);
+    }
+
+    protected HttpResponse<String> doPost(URI uri, Map<String, String> headers, BodyPublisher body) {
+        return doHttpRequest(uri, "POST", headers, BodyPublishers.noBody());
+    }
+
+    protected HttpResponse<String> doPut(URI uri, HttpRequest.BodyPublisher body) {
+        return doPut(uri, emptyMap(), body);
+    }
+
+    protected HttpResponse<String> doPut(URI uri, Map<String, String> headers, BodyPublisher body) {
+        return doHttpRequest(uri, "PUT", headers, body);
+    }
+
+    protected static JSONObject parseJsonObject(HttpResponse<String> response) {
+        return parseBody(response, JSON::parseObject);
+    }
+
+    protected static JSONArray parseJsonArray(HttpResponse<String> response) {
+        return parseBody(response, JSON::parseArray);
+    }
+
+    private static <R> R parseBody(HttpResponse<String> response, Function<String, R> parser) {
+        if (response.statusCode() == 200) {
+            return parser.apply(response.body());
+        } else {
+            throw new HttpException(response.uri(), response.statusCode(), response.body());
+        }
+    }
+
+    private HttpResponse<String> doHttpRequest(URI uri, String method, Map<String, String> headers, BodyPublisher body) {
+        var request = createHttpRequest(uri, method, headers, body);
+        return sendHttpRequest(request);
     }
 
     private static HttpRequest createHttpRequest(URI uri, String method, Map<String, String> headers, BodyPublisher bodyPublisher) {
@@ -58,17 +115,11 @@ public abstract class HttpApi {
         return builder.build();
     }
 
-    private JSONObject requestJson(HttpRequest request) {
-        HttpResponse<String> response = null;
+    private HttpResponse<String> sendHttpRequest(HttpRequest request) {
         try {
-            response = httpClient.send(request, BodyHandlers.ofString());
+            return httpClient.send(request, BodyHandlers.ofString());
         } catch (IOException | InterruptedException e) {
             throw new HttpException(request.uri(), e);
-        }
-        if (response.statusCode() == 200) {
-            return JSONObject.parseObject(response.body());
-        } else {
-            throw new HttpException(request.uri(), response.statusCode(), response.body());
         }
     }
 }
