@@ -2,7 +2,7 @@
 
 pipeline {
     agent {
-        label 'java'
+        label 'os:linux'
     }
     options {
         skipDefaultCheckout()
