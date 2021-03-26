@@ -78,16 +78,16 @@ public final class AwsImpl implements Aws {
             log.info("{} ({})", activity.description(), statusCode);
 
             switch (statusCode) {
+                case CANCELLED:
+                    throw new AwsException("Scaling activity cancelled: " + activityId);
                 case FAILED:
                     throw new AwsException("Scaling activity failed: " + activityId);
                 case SUCCESSFUL:
                     log.info("Scaling activity successful: {}", activityId);
                     return;
-                case IN_PROGRESS:
+                default:
                     sleep();
                     continue;
-                default:
-                    throw new AwsException("Unknown status code of scaling activity: " + statusCode);
             }
         }
     }
