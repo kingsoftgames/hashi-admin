@@ -16,11 +16,11 @@
     <graalvm.version>21.0.0.2</graalvm.version>
     <graalvm.native-image.skip>true</graalvm.native-image.skip>
 
-    <awssdk.version>2.16.29</awssdk.version>
-    <fastjson.version>1.2.75</fastjson.version>
-    <picocli.version>4.6.1</picocli.version>
+    <awssdk.version>2.10.56</awssdk.version>
+    <fastjson.version>1.2.62</fastjson.version>
+    <picocli.version>4.1.4</picocli.version>
     <slf4j.version>1.7.30</slf4j.version>
-    <lombok.version>1.18.18</lombok.version>
+    <lombok.version>1.18.10</lombok.version>
   </properties>
 
   <dependencyManagement>
