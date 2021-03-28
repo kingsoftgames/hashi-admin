@@ -21,7 +21,7 @@ pipeline {
         }
         stage('Maven Package') {
             tools {
-                jdk 'graalvm-ce-java11-20.2.0'
+                jdk 'graalvm-ce-java11-21.0.0.2'
             }
             steps {
                 sh './mvnw clean package -Pnative'
