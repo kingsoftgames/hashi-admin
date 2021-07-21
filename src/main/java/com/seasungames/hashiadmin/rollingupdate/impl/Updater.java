@@ -95,8 +95,8 @@ public final class Updater {
     }
 
     private void validateAsgInstances(List<Instance> instances) {
-        if (!instances.stream().allMatch(x -> x.launchConfigurationName() == null && x.launchTemplate() == null)) {
-            final String message = "Some instance in asg has latest LaunchConfiguration/LaunchTemplate, forgot to update asg with Terraform?";
+        if (!instances.stream().allMatch(x -> x.launchConfigurationName() == null)) {
+            final String message = "Some instance in asg has latest LaunchConfiguration, forgot to update asg with Terraform?";
             throw new RuntimeException(message);
         }
         var instanceIds = instances.stream().map(x -> x.instanceId()).collect(toSet());
