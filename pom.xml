@@ -12,6 +12,7 @@
     <main-class>com.seasungames.hashiadmin.HashiAdmin</main-class>
 
     <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
+    <exec-maven-plugin.version>3.0.0</exec-maven-plugin.version>
 
     <graalvm.version>21.0.0.2</graalvm.version>
     <graalvm.native-image.skip>true</graalvm.native-image.skip>
@@ -114,6 +115,21 @@
                 <mainClass>${main-class}</mainClass>
                 <imageName>${project.artifactId}</imageName>
             </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>exec-maven-plugin</artifactId>
+          <version>${exec-maven-plugin.version}</version>
+          <executions>
+            <execution>
+              <goals>
+                <goal>java</goal>
+              </goals>
+            </execution>
+          </executions>
+          <configuration>
+            <mainClass>${main-class}</mainClass>
+          </configuration>
         </plugin>
     </plugins>
   </build>
