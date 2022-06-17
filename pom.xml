@@ -18,7 +18,7 @@
     <graalvm.native-image.skip>true</graalvm.native-image.skip>
 
     <awssdk.version>2.10.56</awssdk.version>
-    <fastjson.version>1.2.62</fastjson.version>
+    <fastjson.version>1.2.83</fastjson.version>
     <picocli.version>4.1.4</picocli.version>
     <slf4j.version>1.7.30</slf4j.version>
     <lombok.version>1.18.22</lombok.version>
